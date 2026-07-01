@@ -315,7 +315,7 @@ if st.button("生成报告", type="primary"):
         height=600,
         margin=dict(l=80, r=80, t=60, b=20),
         title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}",
-        font=dict(family="PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=14, color="black"),
+        font=dict(family="Noto Sans CJK SC, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=14, color="black"),
         paper_bgcolor='white',
         plot_bgcolor='white'
     )
