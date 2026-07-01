@@ -315,10 +315,14 @@ with col_btn1:
     if st.button("🔄 重置所有", use_container_width=True):
         st.session_state.me_scores = [3] * 30
         st.session_state.ta_scores = [3] * 30
+        st.rerun()  # 强制刷新页面，滑块立即更新
+
 with col_btn2:
     if st.button("🎲 随机填答", use_container_width=True):
         st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
         st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
+        st.rerun()  # 强制刷新页面，滑块立即更新
+
 with col_btn3:
     if st.button("📤 导出我的答案", use_container_width=True):
         encoded = encode_scores(st.session_state.me_scores)
