@@ -5,6 +5,20 @@ import base64
 import json
 from io import BytesIO
 import plotly.io as pio
+import os
+import subprocess
+
+# 检查并安装 Chrome（用于 kaleido 导出图片）
+try:
+    # 尝试生成一张小图测试是否可用
+    import plotly.io as pio
+    fig_test = go.Figure()
+    pio.to_image(fig_test, format='png', engine='kaleido')
+except Exception as e:
+    if 'Chrome' in str(e) or 'kaleido' in str(e):
+        # 自动安装 Chrome
+        os.system('plotly_get_chrome')
+        print("Chrome 安装完成，请重新运行生成图片功能。")
 
 st.set_page_config(page_title="情侣恋爱观测试", layout="wide")
 
