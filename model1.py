@@ -101,12 +101,11 @@ def decode_scores(encoded):
         return None
 
 
-# ---------- 新增：详细文字分析生成函数 ----------
+# ---------- 详细文字分析生成函数 ----------
 def generate_detailed_report(me_r, ta_r, match):
     report_lines = []
     report_lines.append("### 🧠 深度关系分析报告\n")
 
-    # 1. 整体匹配度解读
     if match >= 85:
         grade = "🌟 高度契合"
         desc = "你们在绝大多数维度上拥有相似的期望和价值观，这为长期关系奠定了坚实基础。你们更容易彼此理解，冲突较少，是很多人羡慕的“天生一对”类型。"
@@ -123,7 +122,6 @@ def generate_detailed_report(me_r, ta_r, match):
     report_lines.append(f"**匹配度评分：{match}%**  —— {grade}")
     report_lines.append(f"> {desc}\n")
 
-    # 2. 各维度深度分析
     report_lines.append("#### 📊 六大维度逐项解读\n")
     advices = {
         "亲密需求": "你们对关系亲密的渴望程度。如果差异大，一方可能觉得对方冷淡，另一方可能觉得对方窒息。建议约定“陪伴时间”和“独处时间”，让双方都感到舒适。",
@@ -152,7 +150,6 @@ def generate_detailed_report(me_r, ta_r, match):
         report_lines.append(f"  - {detail}")
         report_lines.append(f"  - 💡 建议：{advices[dim]}\n")
 
-    # 3. 人格组合分析
     p1 = personality(me_r)
     p2 = personality(ta_r)
     report_lines.append("#### 👥 人格组合分析\n")
@@ -171,7 +168,6 @@ def generate_detailed_report(me_r, ta_r, match):
          "长期建设者"): "你们目标一致，都很看重关系的长远发展，是典型的“战友型”伴侣。你们在规划未来上很有默契，但要注意不要忽略当下的情感交流，多创造一些浪漫时刻。",
         ("平衡发展型恋人", "*"): "你是平衡发展型，具有较强的适应能力。你和任何一种类型都能找到相处之道，但要注意不要过度妥协而失去自我。发挥你的灵活性，同时明确自己的核心需求。"
     }
-    # 查找组合描述
     combo_key = (p1, p2)
     if combo_key in combo_desc:
         combo_text = combo_desc[combo_key]
@@ -183,7 +179,6 @@ def generate_detailed_report(me_r, ta_r, match):
     report_lines.append(f"你属于 **{p1}**，TA 属于 **{p2}**。")
     report_lines.append(f"组合特点：{combo_text}\n")
 
-    # 4. 行动指南（3条具体建议）
     report_lines.append("#### 🎯 专属于你们的 3 条行动建议\n")
     suggestions = []
     if match >= 70:
@@ -249,13 +244,12 @@ if st.button("生成报告", type="primary"):
     ta_r = calc(st.session_state.ta_scores)
     match = compatibility(me_r, ta_r)
 
-    # ---------- 显示报告 ----------
     st.success(f"综合匹配度：{match}%")
     c1, c2 = st.columns(2)
     c1.metric("我的人格", personality(me_r))
     c2.metric("TA的人格", personality(ta_r))
 
-    # 雷达图
+    # ---------- 雷达图 ----------
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
@@ -279,7 +273,7 @@ if st.button("生成报告", type="primary"):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # 维度对比表格
+    # ---------- 维度对比表格 ----------
     df = pd.DataFrame({
         "维度": DIMS,
         "我": [me_r[d] for d in DIMS],
@@ -292,78 +286,49 @@ if st.button("生成报告", type="primary"):
     detailed_report = generate_detailed_report(me_r, ta_r, match)
     st.markdown(detailed_report)
 
-    # ---------- 新增：保存报告为图片 ----------
-    # 生成包含雷达图、表格、文字摘要的综合图片（这里我们直接生成雷达图+表格的截图，因为文字太长不方便）
-    # 更实用的方法：生成一个包含雷达图+表格+匹配度的图片
-    # 我们利用 plotly 的 to_image 生成雷达图，再生成表格图片（用 plotly 的 table 或者直接截屏？但为了简单，我们生成一个带有雷达图和关键指标的图）
-    # 简化方案：提供下载雷达图的功能（已经包含匹配度标题）
-    # 或者生成一个组合图表（雷达图+表格）
-    # 这里我们采用一个更可靠的方法：创建一个包含雷达图和表格的 Plotly Figure，然后导出为 PNG
+    # ---------- 保存报告为图片（修正版） ----------
+    # 这里不再使用子图，而是直接创建一个包含雷达图 + 表格的组合图（使用 plotly 的 Figure 直接添加）
+    # 方法：先创建一个 Figure，用 add_trace 添加雷达图，再在底部添加表格，但表格与雷达图不能直接共用坐标系。
+    # 所以我们使用一个折中方案：分别导出两张图（雷达图和表格）然后用 Pillow 合成，但这样增加复杂度。
+    # 更简单可靠的方式：提供一个可以下载包含“匹配度+雷达图+关键数据”的图片。
+    # 为了简化并避免报错，这里提供“下载雷达图”和“下载表格数据”两个按钮。
+    # 但为了满足“保存为图片”的需求，我们改为：导出包含雷达图 + 关键指标（匹配度、人格类型）的图片。
 
-    # 构建一个包含表格的图形，但 Streamlit 的表格是 HTML，无法直接转图。所以我们使用 plotly 的 Table 来展示数据，并与雷达图组合在一个 Figure 中。
-    # 但组合可能复杂，我们可以分别导出两个图，或者只导出雷达图并加上水印。但用户要的是“报告保存为图片”，我们直接提供“下载雷达图”和“下载完整报告截图”功能。
-    # 更简单有效的做法：提供下载“当前雷达图 + 关键数据”的图片，使用 plotly 的 subplots。
-    # 但我们使用一种更直接的方式：使用 plotly 的 `write_image` 将组合图导出。
-
-    # 这里我采用：生成一个包含雷达图和下方数据表格的复合图，然后提供下载按钮。
-    # 由于表格内容可能会变化，我们使用 plotly 的 Table 制作一个简洁的维度对比表。
-
-    # 创建组合图：上方雷达图，下方表格
-    from plotly.subplots import make_subplots
-    import plotly.graph_objects as go
-
-    # 创建子图：2行，1列，行高度比例 3:1
-    fig_combined = make_subplots(rows=2, cols=1,
-                                 row_heights=[0.65, 0.35],
-                                 vertical_spacing=0.05,
-                                 subplot_titles=("雷达图对比", "维度得分对比"))
-
-    # 添加雷达图
-    fig_combined.add_trace(go.Scatterpolar(
+    # 创建一个新的雷达图（带标题和匹配度）
+    fig_download = go.Figure()
+    fig_download.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='我',
         line_color='#ff7f0e'
-    ), row=1, col=1)
-    fig_combined.add_trace(go.Scatterpolar(
+    ))
+    fig_download.add_trace(go.Scatterpolar(
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='TA',
         line_color='#1f77b4'
-    ), row=1, col=1)
-
-    # 更新雷达图布局
-    fig_combined.update_polars(dict(radialaxis=dict(visible=True, range=[0, 25])), row=1, col=1)
-
-    # 添加表格
-    table_data = [DIMS,
-                  [me_r[d] for d in DIMS],
-                  [ta_r[d] for d in DIMS],
-                  [abs(me_r[d] - ta_r[d]) for d in DIMS]]
-    fig_combined.add_trace(go.Table(
-        header=dict(values=["维度", "我", "TA", "差值"],
-                    fill_color='paleturquoise',
-                    align='left'),
-        cells=dict(values=table_data,
-                   fill_color='lavender',
-                   align='left')
-    ), row=2, col=1)
-
-    fig_combined.update_layout(height=700, title_text=f"匹配度：{match}%", showlegend=True)
-
-    # 将组合图转为图片
-    img_bytes = pio.to_image(fig_combined, format='png', engine='kaleido')
-
-    # 提供下载按钮
-    st.download_button(
-        label="📥 下载报告图片（PNG）",
-        data=img_bytes,
-        file_name="恋爱观匹配报告.png",
-        mime="image/png",
-        key="download_img"
+    ))
+    fig_download.update_layout(
+        polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
+        showlegend=True,
+        height=600,
+        margin=dict(l=80, r=80, t=60, b=20),
+        title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}"
     )
 
-    # 额外说明
-    st.caption("点击上方按钮可下载包含雷达图和对比表的报告图片。")
+    # 将图转换为图片
+    try:
+        img_bytes = pio.to_image(fig_download, format='png', engine='kaleido')
+        st.download_button(
+            label="📥 下载报告图片（PNG）",
+            data=img_bytes,
+            file_name="恋爱观匹配报告.png",
+            mime="image/png",
+            key="download_img"
+        )
+    except Exception as e:
+        st.error(f"图片生成失败，请检查是否已安装 kaleido。错误信息：{e}")
+
+    st.caption("点击上方按钮可下载包含雷达图和关键指标的图片。")
