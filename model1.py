@@ -255,18 +255,9 @@ def generate_detailed_report(me_r, ta_r, match):
     report_lines.append("\n---\n*报告由 AI 生成，仅供情感参考，真实关系还需用心经营。*")
     return "\n".join(report_lines)
 
-
 # ---------- 主界面 ----------
 st.title("💞 情侣恋爱观兼容性测试")
 
-# 侧边栏：历史记录
-with st.sidebar:
-    st.header("📜 历史记录")
-    # 这里我们使用 HTML + JS 在页面加载时显示，但为了更好交互，我们使用st.expander显示
-    # 我们会在下面用st.markdown嵌入一个div并填充历史记录
-    pass
-
-# 主区域
 # 昵称输入
 col_name1, col_name2 = st.columns(2)
 with col_name1:
@@ -282,11 +273,9 @@ if 'ta_scores' not in st.session_state:
 if 'pending_record' not in st.session_state:
     st.session_state.pending_record = None
 
-# ---------- 处理待存储的记录 ----------
-# 如果存在待存储记录，则生成JS脚本写入localStorage
+# ---------- 处理待存储的记录（历史记录） ----------
 if st.session_state.pending_record is not None:
     record = st.session_state.pending_record
-    # 构造JS代码
     js_code = f"""
     <script>
     (function() {{
@@ -294,19 +283,11 @@ if st.session_state.pending_record is not None:
         var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
         history.push(record);
         localStorage.setItem('love_test_history', JSON.stringify(history));
-        // 刷新页面以显示更新后的历史记录（但这里无需刷新，因为后面会rerun）
-        // 但为了立即显示，我们可以使用 location.reload()，但会丢失当前输入状态，
-        // 更优雅的是在存储后不刷新，而是通过SessionState控制显示，但我们选择简单的reload
-        // 但会导致页面刷新，用户输入可能丢失，所以我们先不刷新，而是使用一个标记让页面重新运行？
-        // 但既然我们已经用pending_record，存储后清除，然后调用st.rerun()，所以这里不需要刷新。
-        // 但此脚本是在页面加载时执行的，所以我们只要确保在页面加载时执行存储并清除pending_record即可。
     }})();
     </script>
     """
     st.markdown(js_code, unsafe_allow_html=True)
-    # 清除 pending_record，避免重复存储
     st.session_state.pending_record = None
-    # 刷新页面（重新运行脚本），使历史记录立即显示
     st.rerun()
 
 # ---------- 按钮行 ----------
@@ -315,13 +296,13 @@ with col_btn1:
     if st.button("🔄 重置所有", use_container_width=True):
         st.session_state.me_scores = [3] * 30
         st.session_state.ta_scores = [3] * 30
-        st.rerun()  # 强制刷新页面，滑块立即更新
+        st.rerun()
 
 with col_btn2:
     if st.button("🎲 随机填答", use_container_width=True):
         st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
         st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
-        st.rerun()  # 强制刷新页面，滑块立即更新
+        st.rerun()
 
 with col_btn3:
     if st.button("📤 导出我的答案", use_container_width=True):
@@ -351,6 +332,7 @@ with col2:
                 for i, val in enumerate(decoded):
                     st.session_state.ta_scores[i] = val
                 st.success("导入成功！")
+                st.rerun()
             else:
                 st.error("编码无效，请检查是否完整复制")
     for i, (q, _) in enumerate(QUESTIONS):
@@ -465,8 +447,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         st.error(f"图片生成失败：{e}")
     st.caption("点击上方按钮下载完整报告图片。")
 
-    # ---------- 保存历史记录（存入localStorage） ----------
-    # 构造记录
+    # ---------- 保存历史记录 ----------
     record = {
         "时间": now,
         "匹配度": match,
@@ -485,14 +466,12 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         "长期关系_TA": ta_r["长期关系"],
         "灵魂伴侣_TA": ta_r["灵魂伴侣"],
     }
-    # 存入 session_state 待存储
     st.session_state.pending_record = record
     st.rerun()
 
-# ---------- 显示历史记录（在页面底部） ----------
+# ---------- 显示历史记录 ----------
 st.markdown("---")
 with st.expander("📚 查看历史记录", expanded=False):
-    # 此处放置一个占位div，通过JS读取localStorage并渲染表格
     st.markdown("""
     <div id="history-container">
         <p>加载历史记录中...</p>
@@ -506,12 +485,10 @@ with st.expander("📚 查看历史记录", expanded=False):
                 container.innerHTML = '<p>暂无历史记录。</p>';
                 return;
             }
-            // 构建表格
             var table = document.createElement('table');
             table.style.width = '100%';
             table.style.borderCollapse = 'collapse';
             table.style.fontSize = '14px';
-            // 表头
             var thead = document.createElement('thead');
             var headerRow = document.createElement('tr');
             var headers = ['时间', '匹配度', '我人格', 'TA人格', '亲密需求_我', '独立需求_我', '冲突处理_我', '安全感_我', '长期关系_我', '灵魂伴侣_我', '亲密需求_TA', '独立需求_TA', '冲突处理_TA', '安全感_TA', '长期关系_TA', '灵魂伴侣_TA'];
@@ -525,7 +502,6 @@ with st.expander("📚 查看历史记录", expanded=False):
             });
             thead.appendChild(headerRow);
             table.appendChild(thead);
-            // 表体
             var tbody = document.createElement('tbody');
             history.forEach(function(rec) {
                 var row = document.createElement('tr');
@@ -542,7 +518,6 @@ with st.expander("📚 查看历史记录", expanded=False):
             table.appendChild(tbody);
             container.innerHTML = '';
             container.appendChild(table);
-            // 添加导出和清空按钮（使用JS）
             var btnDiv = document.createElement('div');
             btnDiv.style.marginTop = '10px';
             var exportBtn = document.createElement('button');
@@ -564,15 +539,13 @@ with st.expander("📚 查看历史记录", expanded=False):
             clearBtn.onclick = function() {
                 if (confirm('确定要清空所有历史记录吗？')) {
                     localStorage.removeItem('love_test_history');
-                    renderHistory(); // 重新渲染
+                    renderHistory();
                 }
             };
             btnDiv.appendChild(clearBtn);
             container.appendChild(btnDiv);
         }
-        // 初次加载渲染
         renderHistory();
-        // 当存储变化时（其他标签页修改），可监听storage事件，但为了简单，不实现。
     })();
     </script>
     """, unsafe_allow_html=True)
