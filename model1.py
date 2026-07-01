@@ -14,19 +14,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------- 自定义CSS，让界面更可爱鲜艳 ----------
+# ---------- 自定义CSS ----------
 st.markdown("""
 <style>
-    /* 整体背景渐变 */
     .stApp {
         background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
     }
-    /* 卡片圆角 + 阴影 */
     .css-1r6slb0, .css-1aumxhk, .stButton>button {
         border-radius: 20px !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
-    /* 标题大号彩色 */
     h1 {
         font-size: 3rem !important;
         background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
@@ -34,11 +31,16 @@ st.markdown("""
         -webkit-text-fill-color: transparent !important;
         font-weight: 800 !important;
     }
-    /* 滑块样式 */
     .stSlider > div > div > div {
-        background: linear-gradient(90deg, #ff9a9e, #fad0c4) !important;
+        background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fbc2eb) !important;
+        height: 8px !important;
+        border-radius: 4px !important;
     }
-    /* 按钮圆角 */
+    .stSlider > div > div > div > div {
+        background: #ff6b6b !important;
+        border: 2px solid white !important;
+        box-shadow: 0 0 8px #ff6b6b80 !important;
+    }
     .stButton>button {
         background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
         color: white !important;
@@ -46,39 +48,33 @@ st.markdown("""
         font-weight: bold !important;
         padding: 0.5rem 2rem !important;
         border-radius: 50px !important;
-        transition: transform 0.2s;
+        transition: all 0.3s;
+        box-shadow: 0 4px 10px rgba(238, 90, 36, 0.3) !important;
     }
     .stButton>button:hover {
         transform: scale(1.05);
-        background: linear-gradient(135deg, #ee5a24, #ff6b6b) !important;
+        box-shadow: 0 6px 14px rgba(238, 90, 36, 0.5) !important;
     }
-    /* 指标卡片 */
     [data-testid="metric-container"] {
         background: rgba(255,255,255,0.7) !important;
         backdrop-filter: blur(10px);
         border-radius: 20px !important;
         padding: 1rem !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid rgba(255,255,255,0.3);
     }
-    /* 标签页样式 */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #feca57, #ff6b6b) !important;
+        border-radius: 20px !important;
     }
     .stTabs [data-baseweb="tab"] {
         border-radius: 20px 20px 0 0 !important;
         padding: 10px 20px !important;
         background-color: #f0e6d3 !important;
-        color: #5a4a3a !important;
         font-weight: bold;
     }
     .stTabs [aria-selected="true"] {
         background-color: #ff6b6b !important;
         color: white !important;
-    }
-    /* 进度条颜色 */
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, #feca57, #ff6b6b) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -124,14 +120,12 @@ QUESTIONS = [
 
 DIMS = ["亲密需求", "独立需求", "冲突处理", "安全感", "长期关系", "灵魂伴侣"]
 
-
-# ---------- 核心计算函数 ----------
+# ---------- 核心函数 ----------
 def calc(scores):
     result = {}
     for d in DIMS:
         result[d] = sum(v for v, (q, dim) in zip(scores, QUESTIONS) if dim == d)
     return result
-
 
 def personality(r):
     if r["灵魂伴侣"] >= 20 and r["独立需求"] >= 18:
@@ -142,30 +136,22 @@ def personality(r):
         return "长期建设者"
     return "平衡发展型恋人"
 
-
 def compatibility(a, b):
     scores = []
     for d in DIMS:
         diff = abs(a[d] - b[d])
-        if diff <= 2:
-            s = 100
-        elif diff <= 5:
-            s = 80
-        elif diff <= 8:
-            s = 60
-        elif diff <= 11:
-            s = 40
-        else:
-            s = 20
+        if diff <= 2: s = 100
+        elif diff <= 5: s = 80
+        elif diff <= 8: s = 60
+        elif diff <= 11: s = 40
+        else: s = 20
         scores.append(s)
     return round(sum(scores) / len(scores))
-
 
 def encode_scores(scores):
     json_str = json.dumps(scores)
     b64 = base64.b64encode(json_str.encode()).decode()
     return b64
-
 
 def decode_scores(encoded):
     try:
@@ -176,7 +162,6 @@ def decode_scores(encoded):
         return scores
     except:
         return None
-
 
 # ---------- 详细报告 ----------
 def generate_detailed_report(me_r, ta_r, match):
@@ -231,18 +216,12 @@ def generate_detailed_report(me_r, ta_r, match):
     p2 = personality(ta_r)
     report_lines.append("#### 👥 人格组合分析\n")
     combo_desc = {
-        ("灵魂共鸣型探索者",
-         "灵魂共鸣型探索者"): "你们都是追寻深度连接的探索者，容易在思想和灵魂层面产生强烈共鸣。你们的关系可能充满深度对话和共同成长，但也要注意不要过于理想化，接地气的相处同样重要。",
-        ("灵魂共鸣型探索者",
-         "安全守护者"): "一个追求精神共鸣，一个追求稳定安全感。这种组合能形成“互补式安全网”——探索者带来新鲜感，守护者带来稳定感。关键在于双方都能看到对方给予的不同价值。",
-        ("灵魂共鸣型探索者",
-         "长期建设者"): "探索者注重当下的情感深度，建设者注重未来的规划和承诺。你们可以形成“梦想+执行”的搭档模式，但需要注意节奏差异，探索者不要嫌建设者太实际，建设者不要嫌探索者太飘。",
-        ("安全守护者",
-         "安全守护者"): "你们都非常重视安全感和稳定，关系可能很温暖、可预期，但有时可能缺乏一些冒险和刺激。可以偶尔一起尝试新鲜事物，给关系注入活力。",
-        ("安全守护者",
-         "长期建设者"): "守护者提供即时的情感支持，建设者提供长远的未来蓝图。这种搭配很扎实，容易共同建立家庭。守护者要理解建设者有时可能更关注“事”而非“情”，建设者要多给守护者情感确认。",
-        ("长期建设者",
-         "长期建设者"): "你们目标一致，都很看重关系的长远发展，是典型的“战友型”伴侣。你们在规划未来上很有默契，但要注意不要忽略当下的情感交流，多创造一些浪漫时刻。",
+        ("灵魂共鸣型探索者", "灵魂共鸣型探索者"): "你们都是追寻深度连接的探索者，容易在思想和灵魂层面产生强烈共鸣。你们的关系可能充满深度对话和共同成长，但也要注意不要过于理想化，接地气的相处同样重要。",
+        ("灵魂共鸣型探索者", "安全守护者"): "一个追求精神共鸣，一个追求稳定安全感。这种组合能形成“互补式安全网”——探索者带来新鲜感，守护者带来稳定感。关键在于双方都能看到对方给予的不同价值。",
+        ("灵魂共鸣型探索者", "长期建设者"): "探索者注重当下的情感深度，建设者注重未来的规划和承诺。你们可以形成“梦想+执行”的搭档模式，但需要注意节奏差异，探索者不要嫌建设者太实际，建设者不要嫌探索者太飘。",
+        ("安全守护者", "安全守护者"): "你们都非常重视安全感和稳定，关系可能很温暖、可预期，但有时可能缺乏一些冒险和刺激。可以偶尔一起尝试新鲜事物，给关系注入活力。",
+        ("安全守护者", "长期建设者"): "守护者提供即时的情感支持，建设者提供长远的未来蓝图。这种搭配很扎实，容易共同建立家庭。守护者要理解建设者有时可能更关注“事”而非“情”，建设者要多给守护者情感确认。",
+        ("长期建设者", "长期建设者"): "你们目标一致，都很看重关系的长远发展，是典型的“战友型”伴侣。你们在规划未来上很有默契，但要注意不要忽略当下的情感交流，多创造一些浪漫时刻。",
         ("平衡发展型恋人", "*"): "你是平衡发展型，具有较强的适应能力。你和任何一种类型都能找到相处之道，但要注意不要过度妥协而失去自我。发挥你的灵活性，同时明确自己的核心需求。"
     }
     combo_key = (p1, p2)
@@ -280,6 +259,14 @@ def generate_detailed_report(me_r, ta_r, match):
 # ---------- 主界面 ----------
 st.title("💞 情侣恋爱观兼容性测试")
 
+# 侧边栏：历史记录
+with st.sidebar:
+    st.header("📜 历史记录")
+    # 这里我们使用 HTML + JS 在页面加载时显示，但为了更好交互，我们使用st.expander显示
+    # 我们会在下面用st.markdown嵌入一个div并填充历史记录
+    pass
+
+# 主区域
 # 昵称输入
 col_name1, col_name2 = st.columns(2)
 with col_name1:
@@ -292,54 +279,66 @@ if 'me_scores' not in st.session_state:
     st.session_state.me_scores = [3] * 30
 if 'ta_scores' not in st.session_state:
     st.session_state.ta_scores = [3] * 30
+if 'pending_record' not in st.session_state:
+    st.session_state.pending_record = None
 
-# 两列布局：左列为“我”，右列为“TA”（但手机自动变为上下排列）
-col1, col2 = st.columns(2, gap="large")
+# ---------- 处理待存储的记录 ----------
+# 如果存在待存储记录，则生成JS脚本写入localStorage
+if st.session_state.pending_record is not None:
+    record = st.session_state.pending_record
+    # 构造JS代码
+    js_code = f"""
+    <script>
+    (function() {{
+        var record = {json.dumps(record)};
+        var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
+        history.push(record);
+        localStorage.setItem('love_test_history', JSON.stringify(history));
+        // 刷新页面以显示更新后的历史记录（但这里无需刷新，因为后面会rerun）
+        // 但为了立即显示，我们可以使用 location.reload()，但会丢失当前输入状态，
+        // 更优雅的是在存储后不刷新，而是通过SessionState控制显示，但我们选择简单的reload
+        // 但会导致页面刷新，用户输入可能丢失，所以我们先不刷新，而是使用一个标记让页面重新运行？
+        // 但既然我们已经用pending_record，存储后清除，然后调用st.rerun()，所以这里不需要刷新。
+        // 但此脚本是在页面加载时执行的，所以我们只要确保在页面加载时执行存储并清除pending_record即可。
+    }})();
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+    # 清除 pending_record，避免重复存储
+    st.session_state.pending_record = None
+    # 刷新页面（重新运行脚本），使历史记录立即显示
+    st.rerun()
 
-# ---------- 辅助功能：重置 & 随机 ----------
-with st.container():
-    col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([1, 1, 1, 4])
-    with col_btn1:
-        if st.button("🔄 重置所有", use_container_width=True):
-            st.session_state.me_scores = [3] * 30
-            st.session_state.ta_scores = [3] * 30
-            st.rerun()
-    with col_btn2:
-        if st.button("🎲 随机填答", use_container_width=True):
-            st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
-            st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
-            st.rerun()
-    with col_btn3:
-        # 导出我的答案
-        if st.button("📤 导出我的答案", use_container_width=True):
-            encoded = encode_scores(st.session_state.me_scores)
-            st.code(encoded, language="text")
-            st.caption("复制编码发送给伴侣")
+# ---------- 按钮行 ----------
+col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([1, 1, 1, 4])
+with col_btn1:
+    if st.button("🔄 重置所有", use_container_width=True):
+        st.session_state.me_scores = [3] * 30
+        st.session_state.ta_scores = [3] * 30
+with col_btn2:
+    if st.button("🎲 随机填答", use_container_width=True):
+        st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
+        st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
+with col_btn3:
+    if st.button("📤 导出我的答案", use_container_width=True):
+        encoded = encode_scores(st.session_state.me_scores)
+        st.code(encoded, language="text")
+        st.caption("复制编码发送给伴侣")
 
 # ---------- 答题区 ----------
+col1, col2 = st.columns(2, gap="large")
 with col1:
     st.subheader(f"💕 {my_name}")
-    # 显示进度
     progress = sum(1 for v in st.session_state.me_scores if v != 0) / 30
-    st.progress(progress, text=f"已答 {int(progress * 30)}/30 题")
-
+    st.progress(progress, text=f"已答 {int(progress*30)}/30 题")
     for i, (q, _) in enumerate(QUESTIONS):
-        val = st.slider(
-            f"{i + 1}. {q}",
-            1, 5,
-            value=st.session_state.me_scores[i],
-            key=f"m_{i}",
-            label_visibility="visible"
-        )
+        val = st.slider(f"{i+1}. {q}", 1, 5, value=st.session_state.me_scores[i], key=f"m_{i}")
         st.session_state.me_scores[i] = val
 
 with col2:
     st.subheader(f"💖 {ta_name}")
-    # 进度
     progress_ta = sum(1 for v in st.session_state.ta_scores if v != 0) / 30
-    st.progress(progress_ta, text=f"已答 {int(progress_ta * 30)}/30 题")
-
-    # 导入伴侣答案
+    st.progress(progress_ta, text=f"已答 {int(progress_ta*30)}/30 题")
     with st.expander("📥 导入伴侣答案"):
         ta_code = st.text_input("粘贴伴侣导出的编码", key="ta_code_input")
         if st.button("导入", use_container_width=True):
@@ -348,18 +347,10 @@ with col2:
                 for i, val in enumerate(decoded):
                     st.session_state.ta_scores[i] = val
                 st.success("导入成功！")
-                st.rerun()
             else:
                 st.error("编码无效，请检查是否完整复制")
-
     for i, (q, _) in enumerate(QUESTIONS):
-        val = st.slider(
-            f"{i + 1}. {q}",
-            1, 5,
-            value=st.session_state.ta_scores[i],
-            key=f"t_{i}",
-            label_visibility="visible"
-        )
+        val = st.slider(f"{i+1}. {q}", 1, 5, value=st.session_state.ta_scores[i], key=f"t_{i}")
         st.session_state.ta_scores[i] = val
 
 # ---------- 生成报告 ----------
@@ -373,7 +364,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
     c1.metric(f"{my_name} 的人格", personality(me_r))
     c2.metric(f"{ta_name} 的人格", personality(ta_r))
 
-    # ---------- 雷达图（网页显示） ----------
+    # 雷达图
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
@@ -400,7 +391,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # ---------- 维度对比表格 ----------
+    # 表格
     df = pd.DataFrame({
         "维度": DIMS,
         my_name: [me_r[d] for d in DIMS],
@@ -409,11 +400,11 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
     })
     st.dataframe(df, use_container_width=True)
 
-    # ---------- 详细文字分析 ----------
+    # 文字报告
     detailed_report = generate_detailed_report(me_r, ta_r, match)
     st.markdown(detailed_report)
 
-    # ---------- 下载图片（增强版：含匹配度、人格、日期） ----------
+    # 下载图片
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     fig_download = go.Figure()
     fig_download.add_trace(go.Scatterpolar(
@@ -432,7 +423,6 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         line_color='#1E88E5',
         fillcolor='rgba(30,136,229,0.5)'
     ))
-    # 构造标题文本
     title_text = f"❤️ 匹配度：{match}%  |  {my_name}：{personality(me_r)}  |  {ta_name}：{personality(ta_r)}<br><span style='font-size:12px;color:gray'>生成时间：{now}</span>"
     fig_download.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
@@ -441,8 +431,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         margin=dict(l=80, r=80, t=100, b=60),
         title=dict(
             text=title_text,
-            font=dict(family="WenQuanYi Micro Hei, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=16,
-                      color="black"),
+            font=dict(family="WenQuanYi Micro Hei, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=16, color="black"),
             y=0.95
         ),
         paper_bgcolor='white',
@@ -459,7 +448,6 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
             )
         ]
     )
-
     try:
         img_bytes = pio.to_image(fig_download, format='png', engine='kaleido')
         st.download_button(
@@ -470,5 +458,117 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
             key="download_img"
         )
     except Exception as e:
-        st.error(f"图片生成失败，请检查是否已安装kaleido。错误信息：{e}")
-    st.caption("点击上方按钮下载包含雷达图、匹配度、人格类型和日期的完整报告图片。")
+        st.error(f"图片生成失败：{e}")
+    st.caption("点击上方按钮下载完整报告图片。")
+
+    # ---------- 保存历史记录（存入localStorage） ----------
+    # 构造记录
+    record = {
+        "时间": now,
+        "匹配度": match,
+        f"{my_name}人格": personality(me_r),
+        f"{ta_name}人格": personality(ta_r),
+        "亲密需求_我": me_r["亲密需求"],
+        "独立需求_我": me_r["独立需求"],
+        "冲突处理_我": me_r["冲突处理"],
+        "安全感_我": me_r["安全感"],
+        "长期关系_我": me_r["长期关系"],
+        "灵魂伴侣_我": me_r["灵魂伴侣"],
+        "亲密需求_TA": ta_r["亲密需求"],
+        "独立需求_TA": ta_r["独立需求"],
+        "冲突处理_TA": ta_r["冲突处理"],
+        "安全感_TA": ta_r["安全感"],
+        "长期关系_TA": ta_r["长期关系"],
+        "灵魂伴侣_TA": ta_r["灵魂伴侣"],
+    }
+    # 存入 session_state 待存储
+    st.session_state.pending_record = record
+    st.rerun()
+
+# ---------- 显示历史记录（在页面底部） ----------
+st.markdown("---")
+with st.expander("📚 查看历史记录", expanded=False):
+    # 此处放置一个占位div，通过JS读取localStorage并渲染表格
+    st.markdown("""
+    <div id="history-container">
+        <p>加载历史记录中...</p>
+    </div>
+    <script>
+    (function() {
+        function renderHistory() {
+            var container = document.getElementById('history-container');
+            var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
+            if (history.length === 0) {
+                container.innerHTML = '<p>暂无历史记录。</p>';
+                return;
+            }
+            // 构建表格
+            var table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontSize = '14px';
+            // 表头
+            var thead = document.createElement('thead');
+            var headerRow = document.createElement('tr');
+            var headers = ['时间', '匹配度', '我人格', 'TA人格', '亲密需求_我', '独立需求_我', '冲突处理_我', '安全感_我', '长期关系_我', '灵魂伴侣_我', '亲密需求_TA', '独立需求_TA', '冲突处理_TA', '安全感_TA', '长期关系_TA', '灵魂伴侣_TA'];
+            headers.forEach(function(h) {
+                var th = document.createElement('th');
+                th.textContent = h;
+                th.style.border = '1px solid #ddd';
+                th.style.padding = '8px';
+                th.style.backgroundColor = '#f2f2f2';
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            // 表体
+            var tbody = document.createElement('tbody');
+            history.forEach(function(rec) {
+                var row = document.createElement('tr');
+                headers.forEach(function(h) {
+                    var td = document.createElement('td');
+                    td.textContent = rec[h] !== undefined ? rec[h] : '';
+                    td.style.border = '1px solid #ddd';
+                    td.style.padding = '8px';
+                    td.style.textAlign = 'center';
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            container.innerHTML = '';
+            container.appendChild(table);
+            // 添加导出和清空按钮（使用JS）
+            var btnDiv = document.createElement('div');
+            btnDiv.style.marginTop = '10px';
+            var exportBtn = document.createElement('button');
+            exportBtn.textContent = '📥 导出JSON';
+            exportBtn.style.marginRight = '10px';
+            exportBtn.onclick = function() {
+                var dataStr = JSON.stringify(history, null, 2);
+                var blob = new Blob([dataStr], {type: 'application/json'});
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '恋爱观历史记录.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            btnDiv.appendChild(exportBtn);
+            var clearBtn = document.createElement('button');
+            clearBtn.textContent = '🗑️ 清空所有记录';
+            clearBtn.onclick = function() {
+                if (confirm('确定要清空所有历史记录吗？')) {
+                    localStorage.removeItem('love_test_history');
+                    renderHistory(); // 重新渲染
+                }
+            };
+            btnDiv.appendChild(clearBtn);
+            container.appendChild(btnDiv);
+        }
+        // 初次加载渲染
+        renderHistory();
+        // 当存储变化时（其他标签页修改），可监听storage事件，但为了简单，不实现。
+    })();
+    </script>
+    """, unsafe_allow_html=True)
