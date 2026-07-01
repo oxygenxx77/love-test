@@ -7,12 +7,7 @@ import random
 from datetime import datetime
 import plotly.io as pio
 
-# ---------- 页面配置 ----------
-st.set_page_config(
-    page_title="❤️ 情侣恋爱观测试",
-    page_icon="💞",
-    layout="wide"
-)
+st.set_page_config(page_title="❤️ 情侣恋爱观测试", page_icon="💞", layout="wide")
 
 # ---------- 自定义CSS ----------
 st.markdown("""
@@ -25,7 +20,7 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
     h1 {
-        font-size: 3rem !important;
+        font-size: 2.5rem !important;
         background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
@@ -43,9 +38,9 @@ st.markdown("""
     }
     .stButton>button {
         background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
-        color: white !important;
-        border: none !important;
+        color: #2d2d2d !important;
         font-weight: bold !important;
+        border: none !important;
         padding: 0.5rem 2rem !important;
         border-radius: 50px !important;
         transition: all 0.3s;
@@ -56,11 +51,12 @@ st.markdown("""
         box-shadow: 0 6px 14px rgba(238, 90, 36, 0.5) !important;
     }
     [data-testid="metric-container"] {
-        background: rgba(255,255,255,0.7) !important;
+        background: rgba(255,255,255,0.8) !important;
         backdrop-filter: blur(10px);
         border-radius: 20px !important;
         padding: 1rem !important;
-        border: 1px solid rgba(255,255,255,0.3);
+        border: 1px solid rgba(0,0,0,0.1);
+        color: #000 !important;
     }
     .stProgress > div > div > div {
         background: linear-gradient(90deg, #feca57, #ff6b6b) !important;
@@ -76,6 +72,11 @@ st.markdown("""
         background-color: #ff6b6b !important;
         color: white !important;
     }
+    @media (max-width: 640px) {
+        .stColumns {
+            flex-direction: column !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -86,31 +87,26 @@ QUESTIONS = [
     ("一天没聊天会让我失落。", "亲密需求"),
     ("我希望伴侣参与我大部分生活。", "亲密需求"),
     ("我喜欢两个人一起行动。", "亲密需求"),
-
     ("恋爱后我仍需要大量个人空间。", "独立需求"),
     ("伴侣不应干涉我的社交圈。", "独立需求"),
     ("我接受长期亲密的异性好友。", "独立需求"),
     ("我接受伴侣有其他情感支持系统。", "独立需求"),
     ("恋爱不应该成为生活重心。", "独立需求"),
-
     ("发生矛盾时我倾向立即沟通。", "冲突处理"),
     ("我不喜欢冷战。", "冲突处理"),
     ("即使生气也愿意修复关系。", "冲突处理"),
     ("争吵时更关注解决问题。", "冲突处理"),
     ("我能接受观点不同。", "冲突处理"),
-
     ("频繁联系让我更有安全感。", "安全感"),
     ("公开关系会让我更安心。", "安全感"),
     ("伴侣优先考虑我会让我安心。", "安全感"),
     ("我会在意伴侣与异性的亲密程度。", "安全感"),
     ("我希望自己是伴侣最特殊的人。", "安全感"),
-
     ("恋爱最终应以长期承诺为目标。", "长期关系"),
     ("价值观比兴趣爱好更重要。", "长期关系"),
     ("生活习惯差异可以磨合。", "长期关系"),
     ("我希望深度绑定未来规划。", "长期关系"),
     ("我愿意为关系做妥协。", "长期关系"),
-
     ("精神共鸣比现实条件更重要。", "灵魂伴侣"),
     ("伴侣应该是最懂我的人。", "灵魂伴侣"),
     ("我相信灵魂伴侣存在。", "灵魂伴侣"),
@@ -149,21 +145,14 @@ def compatibility(a, b):
     return round(sum(scores) / len(scores))
 
 def encode_scores(scores):
-    json_str = json.dumps(scores)
-    b64 = base64.b64encode(json_str.encode()).decode()
-    return b64
+    return base64.b64encode(json.dumps(scores).encode()).decode()
 
 def decode_scores(encoded):
     try:
-        json_str = base64.b64decode(encoded.encode()).decode()
-        scores = json.loads(json_str)
-        if len(scores) != 30:
-            return None
-        return scores
+        return json.loads(base64.b64decode(encoded.encode()).decode())
     except:
         return None
 
-# ---------- 详细报告 ----------
 def generate_detailed_report(me_r, ta_r, match):
     report_lines = []
     report_lines.append("### 🧠 深度关系分析报告\n")
@@ -258,7 +247,7 @@ def generate_detailed_report(me_r, ta_r, match):
 # ---------- 主界面 ----------
 st.title("💞 情侣恋爱观兼容性测试")
 
-# 昵称输入
+# 昵称
 col_name1, col_name2 = st.columns(2)
 with col_name1:
     my_name = st.text_input("你的昵称（可选）", value="我", max_chars=10)
@@ -270,25 +259,8 @@ if 'me_scores' not in st.session_state:
     st.session_state.me_scores = [3] * 30
 if 'ta_scores' not in st.session_state:
     st.session_state.ta_scores = [3] * 30
-if 'pending_record' not in st.session_state:
-    st.session_state.pending_record = None
-
-# ---------- 处理待存储的记录（历史记录） ----------
-if st.session_state.pending_record is not None:
-    record = st.session_state.pending_record
-    js_code = f"""
-    <script>
-    (function() {{
-        var record = {json.dumps(record)};
-        var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
-        history.push(record);
-        localStorage.setItem('love_test_history', JSON.stringify(history));
-    }})();
-    </script>
-    """
-    st.markdown(js_code, unsafe_allow_html=True)
-    st.session_state.pending_record = None
-    st.rerun()
+if 'report_data' not in st.session_state:
+    st.session_state.report_data = None
 
 # ---------- 按钮行 ----------
 col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([1, 1, 1, 4])
@@ -296,12 +268,14 @@ with col_btn1:
     if st.button("🔄 重置所有", use_container_width=True):
         st.session_state.me_scores = [3] * 30
         st.session_state.ta_scores = [3] * 30
+        st.toast("✅ 已重置所有答案", icon="🔄")
         st.rerun()
 
 with col_btn2:
     if st.button("🎲 随机填答", use_container_width=True):
         st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
         st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
+        st.toast("🎲 已随机填充答案", icon="✨")
         st.rerun()
 
 with col_btn3:
@@ -328,13 +302,12 @@ with col2:
         ta_code = st.text_input("粘贴伴侣导出的编码", key="ta_code_input")
         if st.button("导入", use_container_width=True):
             decoded = decode_scores(ta_code)
-            if decoded is not None:
-                for i, val in enumerate(decoded):
-                    st.session_state.ta_scores[i] = val
+            if decoded is not None and len(decoded) == 30:
+                st.session_state.ta_scores = decoded
                 st.success("导入成功！")
                 st.rerun()
             else:
-                st.error("编码无效，请检查是否完整复制")
+                st.error("编码无效")
     for i, (q, _) in enumerate(QUESTIONS):
         val = st.slider(f"{i+1}. {q}", 1, 5, value=st.session_state.ta_scores[i], key=f"t_{i}")
         st.session_state.ta_scores[i] = val
@@ -344,6 +317,25 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
     me_r = calc(st.session_state.me_scores)
     ta_r = calc(st.session_state.ta_scores)
     match = compatibility(me_r, ta_r)
+    st.session_state.report_data = {
+        "me_r": me_r,
+        "ta_r": ta_r,
+        "match": match,
+        "my_name": my_name,
+        "ta_name": ta_name,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+    }
+    st.rerun()
+
+# ---------- 显示报告 ----------
+if st.session_state.report_data is not None:
+    data = st.session_state.report_data
+    me_r = data["me_r"]
+    ta_r = data["ta_r"]
+    match = data["match"]
+    my_name = data["my_name"]
+    ta_name = data["ta_name"]
+    now = data["timestamp"]
 
     st.success(f"💯 综合匹配度：{match}%")
     c1, c2 = st.columns(2)
@@ -391,7 +383,6 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
     st.markdown(detailed_report)
 
     # 下载图片
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     fig_download = go.Figure()
     fig_download.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
@@ -466,13 +457,21 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         "长期关系_TA": ta_r["长期关系"],
         "灵魂伴侣_TA": ta_r["灵魂伴侣"],
     }
-    st.session_state.pending_record = record
-    st.rerun()
+    st.components.v1.html(f"""
+    <script>
+    (function() {{
+        var record = {json.dumps(record)};
+        var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
+        history.push(record);
+        localStorage.setItem('love_test_history', JSON.stringify(history));
+    }})();
+    </script>
+    """, height=0)
 
-# ---------- 显示历史记录 ----------
+# ---------- 历史记录显示 ----------
 st.markdown("---")
 with st.expander("📚 查看历史记录", expanded=False):
-    st.markdown("""
+    st.components.v1.html("""
     <div id="history-container">
         <p>加载历史记录中...</p>
     </div>
@@ -548,4 +547,4 @@ with st.expander("📚 查看历史记录", expanded=False):
         renderHistory();
     })();
     </script>
-    """, unsafe_allow_html=True)
+    """, height=400)
