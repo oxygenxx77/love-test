@@ -3,13 +3,87 @@ import pandas as pd
 import plotly.graph_objects as go
 import base64
 import json
-from io import BytesIO
+import random
+from datetime import datetime
 import plotly.io as pio
-import os
-import subprocess
 
-st.set_page_config(page_title="情侣恋爱观测试", layout="wide")
+# ---------- 页面配置 ----------
+st.set_page_config(
+    page_title="❤️ 情侣恋爱观测试",
+    page_icon="💞",
+    layout="wide"
+)
 
+# ---------- 自定义CSS，让界面更可爱鲜艳 ----------
+st.markdown("""
+<style>
+    /* 整体背景渐变 */
+    .stApp {
+        background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+    }
+    /* 卡片圆角 + 阴影 */
+    .css-1r6slb0, .css-1aumxhk, .stButton>button {
+        border-radius: 20px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+    /* 标题大号彩色 */
+    h1 {
+        font-size: 3rem !important;
+        background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        font-weight: 800 !important;
+    }
+    /* 滑块样式 */
+    .stSlider > div > div > div {
+        background: linear-gradient(90deg, #ff9a9e, #fad0c4) !important;
+    }
+    /* 按钮圆角 */
+    .stButton>button {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: bold !important;
+        padding: 0.5rem 2rem !important;
+        border-radius: 50px !important;
+        transition: transform 0.2s;
+    }
+    .stButton>button:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #ee5a24, #ff6b6b) !important;
+    }
+    /* 指标卡片 */
+    [data-testid="metric-container"] {
+        background: rgba(255,255,255,0.7) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 20px !important;
+        padding: 1rem !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    /* 标签页样式 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 20px 20px 0 0 !important;
+        padding: 10px 20px !important;
+        background-color: #f0e6d3 !important;
+        color: #5a4a3a !important;
+        font-weight: bold;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #ff6b6b !important;
+        color: white !important;
+    }
+    /* 进度条颜色 */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #feca57, #ff6b6b) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ---------- 题目数据 ----------
 QUESTIONS = [
     ("我希望伴侣是我最重要的情感依靠。", "亲密需求"),
     ("我希望每天和伴侣保持高频联系。", "亲密需求"),
@@ -51,6 +125,7 @@ QUESTIONS = [
 DIMS = ["亲密需求", "独立需求", "冲突处理", "安全感", "长期关系", "灵魂伴侣"]
 
 
+# ---------- 核心计算函数 ----------
 def calc(scores):
     result = {}
     for d in DIMS:
@@ -103,7 +178,7 @@ def decode_scores(encoded):
         return None
 
 
-# ---------- 详细文字分析生成函数 ----------
+# ---------- 详细报告 ----------
 def generate_detailed_report(me_r, ta_r, match):
     report_lines = []
     report_lines.append("### 🧠 深度关系分析报告\n")
@@ -203,61 +278,108 @@ def generate_detailed_report(me_r, ta_r, match):
 
 
 # ---------- 主界面 ----------
-st.title("❤️ 情侣恋爱观兼容性测试")
+st.title("💞 情侣恋爱观兼容性测试")
 
+# 昵称输入
+col_name1, col_name2 = st.columns(2)
+with col_name1:
+    my_name = st.text_input("你的昵称（可选）", value="我", max_chars=10)
+with col_name2:
+    ta_name = st.text_input("伴侣的昵称（可选）", value="TA", max_chars=10)
+
+# 初始化 session_state
 if 'me_scores' not in st.session_state:
     st.session_state.me_scores = [3] * 30
 if 'ta_scores' not in st.session_state:
     st.session_state.ta_scores = [3] * 30
 
-col1, col2 = st.columns(2)
+# 两列布局：左列为“我”，右列为“TA”（但手机自动变为上下排列）
+col1, col2 = st.columns(2, gap="large")
 
+# ---------- 辅助功能：重置 & 随机 ----------
+with st.container():
+    col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([1, 1, 1, 4])
+    with col_btn1:
+        if st.button("🔄 重置所有", use_container_width=True):
+            st.session_state.me_scores = [3] * 30
+            st.session_state.ta_scores = [3] * 30
+            st.rerun()
+    with col_btn2:
+        if st.button("🎲 随机填答", use_container_width=True):
+            st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
+            st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
+            st.rerun()
+    with col_btn3:
+        # 导出我的答案
+        if st.button("📤 导出我的答案", use_container_width=True):
+            encoded = encode_scores(st.session_state.me_scores)
+            st.code(encoded, language="text")
+            st.caption("复制编码发送给伴侣")
+
+# ---------- 答题区 ----------
 with col1:
-    st.header("我")
-    export_me = st.button("📤 导出我的答案（复制编码）", key="export_me")
-    if export_me:
-        encoded = encode_scores(st.session_state.me_scores)
-        st.code(encoded, language="text")
-        st.caption("复制上面的编码，发送给伴侣")
+    st.subheader(f"💕 {my_name}")
+    # 显示进度
+    progress = sum(1 for v in st.session_state.me_scores if v != 0) / 30
+    st.progress(progress, text=f"已答 {int(progress * 30)}/30 题")
 
     for i, (q, _) in enumerate(QUESTIONS):
-        val = st.slider(f"{i + 1}. {q}", 1, 5, value=st.session_state.me_scores[i], key=f"m{i}")
+        val = st.slider(
+            f"{i + 1}. {q}",
+            1, 5,
+            value=st.session_state.me_scores[i],
+            key=f"m_{i}",
+            label_visibility="visible"
+        )
         st.session_state.me_scores[i] = val
 
 with col2:
-    st.header("TA")
-    st.markdown("**导入伴侣的答案**")
-    ta_code = st.text_input("粘贴伴侣导出的编码", key="ta_code_input")
-    if st.button("📥 导入", key="import_ta"):
-        decoded = decode_scores(ta_code)
-        if decoded is not None:
-            for i, val in enumerate(decoded):
-                st.session_state.ta_scores[i] = val
-            st.success("导入成功！滑块已更新")
-        else:
-            st.error("编码无效，请检查是否完整复制")
+    st.subheader(f"💖 {ta_name}")
+    # 进度
+    progress_ta = sum(1 for v in st.session_state.ta_scores if v != 0) / 30
+    st.progress(progress_ta, text=f"已答 {int(progress_ta * 30)}/30 题")
+
+    # 导入伴侣答案
+    with st.expander("📥 导入伴侣答案"):
+        ta_code = st.text_input("粘贴伴侣导出的编码", key="ta_code_input")
+        if st.button("导入", use_container_width=True):
+            decoded = decode_scores(ta_code)
+            if decoded is not None:
+                for i, val in enumerate(decoded):
+                    st.session_state.ta_scores[i] = val
+                st.success("导入成功！")
+                st.rerun()
+            else:
+                st.error("编码无效，请检查是否完整复制")
 
     for i, (q, _) in enumerate(QUESTIONS):
-        val = st.slider(f"{i + 1}. {q}", 1, 5, value=st.session_state.ta_scores[i], key=f"t{i}")
+        val = st.slider(
+            f"{i + 1}. {q}",
+            1, 5,
+            value=st.session_state.ta_scores[i],
+            key=f"t_{i}",
+            label_visibility="visible"
+        )
         st.session_state.ta_scores[i] = val
 
-if st.button("生成报告", type="primary"):
+# ---------- 生成报告 ----------
+if st.button("✨ 生成报告", type="primary", use_container_width=True):
     me_r = calc(st.session_state.me_scores)
     ta_r = calc(st.session_state.ta_scores)
     match = compatibility(me_r, ta_r)
 
-    st.success(f"综合匹配度：{match}%")
+    st.success(f"💯 综合匹配度：{match}%")
     c1, c2 = st.columns(2)
-    c1.metric("我的人格", personality(me_r))
-    c2.metric("TA的人格", personality(ta_r))
+    c1.metric(f"{my_name} 的人格", personality(me_r))
+    c2.metric(f"{ta_name} 的人格", personality(ta_r))
 
-    # ---------- 网页显示用的雷达图（带色彩） ----------
+    # ---------- 雷达图（网页显示） ----------
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
-        name='我',
+        name=my_name,
         line_color='#FF6B00',
         fillcolor='rgba(255,107,0,0.4)'
     ))
@@ -265,7 +387,7 @@ if st.button("生成报告", type="primary"):
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
-        name='TA',
+        name=ta_name,
         line_color='#1E88E5',
         fillcolor='rgba(30,136,229,0.4)'
     ))
@@ -273,16 +395,16 @@ if st.button("生成报告", type="primary"):
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
         showlegend=True,
         height=500,
-        margin=dict(l=80, r=80, t=20, b=20),
-        font=dict(family="PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=12)
+        margin=dict(l=80, r=80, t=40, b=40),
+        font=dict(family="WenQuanYi Micro Hei, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=12)
     )
     st.plotly_chart(fig, use_container_width=True)
 
     # ---------- 维度对比表格 ----------
     df = pd.DataFrame({
         "维度": DIMS,
-        "我": [me_r[d] for d in DIMS],
-        "TA": [ta_r[d] for d in DIMS],
+        my_name: [me_r[d] for d in DIMS],
+        ta_name: [ta_r[d] for d in DIMS],
         "差值": [abs(me_r[d] - ta_r[d]) for d in DIMS]
     })
     st.dataframe(df, use_container_width=True)
@@ -291,33 +413,51 @@ if st.button("生成报告", type="primary"):
     detailed_report = generate_detailed_report(me_r, ta_r, match)
     st.markdown(detailed_report)
 
-    # ---------- 下载图片（色彩增强 + 中文支持） ----------
+    # ---------- 下载图片（增强版：含匹配度、人格、日期） ----------
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     fig_download = go.Figure()
     fig_download.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
-        name='我',
+        name=my_name,
         line_color='#FF6B00',
-        fillcolor='rgba(255,107,0,0.5)'  # 更饱和的橙色
+        fillcolor='rgba(255,107,0,0.5)'
     ))
     fig_download.add_trace(go.Scatterpolar(
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
-        name='TA',
+        name=ta_name,
         line_color='#1E88E5',
-        fillcolor='rgba(30,136,229,0.5)'  # 更饱和的蓝色
+        fillcolor='rgba(30,136,229,0.5)'
     ))
+    # 构造标题文本
+    title_text = f"❤️ 匹配度：{match}%  |  {my_name}：{personality(me_r)}  |  {ta_name}：{personality(ta_r)}<br><span style='font-size:12px;color:gray'>生成时间：{now}</span>"
     fig_download.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
         showlegend=True,
         height=600,
-        margin=dict(l=80, r=80, t=60, b=20),
-        title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}",
-        font=dict(family="WenQuanYi Micro Hei, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=14, color="black"),
+        margin=dict(l=80, r=80, t=100, b=60),
+        title=dict(
+            text=title_text,
+            font=dict(family="WenQuanYi Micro Hei, PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=16,
+                      color="black"),
+            y=0.95
+        ),
         paper_bgcolor='white',
-        plot_bgcolor='white'
+        plot_bgcolor='white',
+        annotations=[
+            dict(
+                text="数据维度对比雷达图",
+                x=0.5,
+                y=-0.12,
+                xref="paper",
+                yref="paper",
+                showarrow=False,
+                font=dict(family="WenQuanYi Micro Hei, sans-serif", size=12, color="gray")
+            )
+        ]
     )
 
     try:
@@ -325,10 +465,10 @@ if st.button("生成报告", type="primary"):
         st.download_button(
             label="📥 下载报告图片（PNG）",
             data=img_bytes,
-            file_name="恋爱观匹配报告.png",
+            file_name=f"恋爱观匹配报告_{now.replace(' ', '_')}.png",
             mime="image/png",
             key="download_img"
         )
     except Exception as e:
         st.error(f"图片生成失败，请检查是否已安装kaleido。错误信息：{e}")
-    st.caption("点击上方按钮可下载包含雷达图和关键指标的图片。")
+    st.caption("点击上方按钮下载包含雷达图、匹配度、人格类型和日期的完整报告图片。")
