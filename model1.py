@@ -8,7 +8,6 @@ import plotly.io as pio
 import os
 import subprocess
 
-
 st.set_page_config(page_title="情侣恋爱观测试", layout="wide")
 
 QUESTIONS = [
@@ -252,27 +251,30 @@ if st.button("生成报告", type="primary"):
     c1.metric("我的人格", personality(me_r))
     c2.metric("TA的人格", personality(ta_r))
 
-    # ---------- 雷达图 ----------
+    # ---------- 网页显示用的雷达图（带色彩） ----------
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='我',
-        line_color='#ff7f0e'
+        line_color='#FF6B00',
+        fillcolor='rgba(255,107,0,0.4)'
     ))
     fig.add_trace(go.Scatterpolar(
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='TA',
-        line_color='#1f77b4'
+        line_color='#1E88E5',
+        fillcolor='rgba(30,136,229,0.4)'
     ))
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
         showlegend=True,
         height=500,
-        margin=dict(l=80, r=80, t=20, b=20)
+        margin=dict(l=80, r=80, t=20, b=20),
+        font=dict(family="PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=12)
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -289,23 +291,23 @@ if st.button("生成报告", type="primary"):
     detailed_report = generate_detailed_report(me_r, ta_r, match)
     st.markdown(detailed_report)
 
-    # ---------- 保存报告为图片（颜色增强版） ----------
+    # ---------- 下载图片（色彩增强 + 中文支持） ----------
     fig_download = go.Figure()
     fig_download.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='我',
-        line_color='#FF6B00',  # 亮橙色
-        fillcolor='rgba(255,107,0,0.4)'  # 半透明橙色填充
+        line_color='#FF6B00',
+        fillcolor='rgba(255,107,0,0.5)'  # 更饱和的橙色
     ))
     fig_download.add_trace(go.Scatterpolar(
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='TA',
-        line_color='#1E88E5',  # 亮蓝色
-        fillcolor='rgba(30,136,229,0.4)'  # 半透明蓝色填充
+        line_color='#1E88E5',
+        fillcolor='rgba(30,136,229,0.5)'  # 更饱和的蓝色
     ))
     fig_download.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
@@ -314,7 +316,7 @@ if st.button("生成报告", type="primary"):
         margin=dict(l=80, r=80, t=60, b=20),
         title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}",
         font=dict(family="PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=14, color="black"),
-        paper_bgcolor='white',  # 保证背景白底
+        paper_bgcolor='white',
         plot_bgcolor='white'
     )
 
