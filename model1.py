@@ -9,7 +9,7 @@ import plotly.io as pio
 
 st.set_page_config(page_title="❤️ 情侣恋爱观测试", page_icon="💞", layout="wide")
 
-# ---------- 自定义CSS ----------
+# ---------- 自定义CSS（适配移动端，提高对比度） ----------
 st.markdown("""
 <style>
     .stApp {
@@ -38,7 +38,7 @@ st.markdown("""
     }
     .stButton>button {
         background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
-        color: #2d2d2d !important;
+        color: #2d2d2d !important;  /* 深色文字，提高对比度 */
         font-weight: bold !important;
         border: none !important;
         padding: 0.5rem 2rem !important;
@@ -61,16 +61,6 @@ st.markdown("""
     .stProgress > div > div > div {
         background: linear-gradient(90deg, #feca57, #ff6b6b) !important;
         border-radius: 20px !important;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 20px 20px 0 0 !important;
-        padding: 10px 20px !important;
-        background-color: #f0e6d3 !important;
-        font-weight: bold;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #ff6b6b !important;
-        color: white !important;
     }
     @media (max-width: 640px) {
         .stColumns {
