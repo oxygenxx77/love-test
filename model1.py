@@ -289,39 +289,35 @@ if st.button("生成报告", type="primary"):
     detailed_report = generate_detailed_report(me_r, ta_r, match)
     st.markdown(detailed_report)
 
-    # ---------- 保存报告为图片（修正版） ----------
-    # 这里不再使用子图，而是直接创建一个包含雷达图 + 表格的组合图（使用 plotly 的 Figure 直接添加）
-    # 方法：先创建一个 Figure，用 add_trace 添加雷达图，再在底部添加表格，但表格与雷达图不能直接共用坐标系。
-    # 所以我们使用一个折中方案：分别导出两张图（雷达图和表格）然后用 Pillow 合成，但这样增加复杂度。
-    # 更简单可靠的方式：提供一个可以下载包含“匹配度+雷达图+关键数据”的图片。
-    # 为了简化并避免报错，这里提供“下载雷达图”和“下载表格数据”两个按钮。
-    # 但为了满足“保存为图片”的需求，我们改为：导出包含雷达图 + 关键指标（匹配度、人格类型）的图片。
-
-    # 创建一个新的雷达图（带标题和匹配度）
+    # ---------- 保存报告为图片（颜色增强版） ----------
     fig_download = go.Figure()
     fig_download.add_trace(go.Scatterpolar(
         r=[me_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='我',
-        line_color='#ff7f0e'
+        line_color='#FF6B00',  # 亮橙色
+        fillcolor='rgba(255,107,0,0.4)'  # 半透明橙色填充
     ))
     fig_download.add_trace(go.Scatterpolar(
         r=[ta_r[d] for d in DIMS],
         theta=DIMS,
         fill='toself',
         name='TA',
-        line_color='#1f77b4'
+        line_color='#1E88E5',  # 亮蓝色
+        fillcolor='rgba(30,136,229,0.4)'  # 半透明蓝色填充
     ))
     fig_download.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 25])),
         showlegend=True,
         height=600,
         margin=dict(l=80, r=80, t=60, b=20),
-        title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}"
+        title=f"匹配度：{match}%  |  我：{personality(me_r)}  |  TA：{personality(ta_r)}",
+        font=dict(family="PingFang SC, Microsoft YaHei, SimHei, sans-serif", size=14, color="black"),
+        paper_bgcolor='white',  # 保证背景白底
+        plot_bgcolor='white'
     )
 
-    # 将图转换为图片
     try:
         img_bytes = pio.to_image(fig_download, format='png', engine='kaleido')
         st.download_button(
@@ -332,6 +328,5 @@ if st.button("生成报告", type="primary"):
             key="download_img"
         )
     except Exception as e:
-        st.error(f"图片生成失败，请检查是否已安装 kaleido。错误信息：{e}")
-
+        st.error(f"图片生成失败，请检查是否已安装kaleido。错误信息：{e}")
     st.caption("点击上方按钮可下载包含雷达图和关键指标的图片。")
