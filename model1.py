@@ -9,7 +9,7 @@ import plotly.io as pio
 
 st.set_page_config(page_title="❤️ 情侣恋爱观测试", page_icon="💞", layout="wide")
 
-# ---------- 自定义CSS（修改文字颜色） ----------
+# ---------- 自定义CSS（手机端文字强制黑色） ----------
 st.markdown("""
 <style>
     .stApp {
@@ -26,10 +26,15 @@ st.markdown("""
         -webkit-text-fill-color: transparent !important;
         font-weight: 800 !important;
     }
-    /* 滑块标签文字改为黑色 */
-    .stSlider label {
+    /* 强制滑块标签黑色（PC+手机） */
+    .stSlider label, .stSlider p, .stSlider div[data-testid="stMarkdownContainer"] p {
         color: black !important;
-        font-weight: 500;
+        font-weight: 500 !important;
+    }
+    @media (max-width: 640px) {
+        .stSlider label, .stSlider p {
+            color: black !important;
+        }
     }
     .stSlider > div > div > div {
         background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fbc2eb) !important;
@@ -264,13 +269,14 @@ with col_btn1:
         st.session_state.me_scores = [3] * 30
         st.session_state.ta_scores = [3] * 30
         st.toast("✅ 已重置所有答案", icon="🔄")
-        # 不需要 st.rerun()，按钮回调后脚本自动重运行
+        st.experimental_rerun()  # 强制刷新页面，滑块立即更新
 
 with col_btn2:
     if st.button("🎲 随机填答", use_container_width=True):
         st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
         st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
         st.toast("🎲 已随机填充答案", icon="✨")
+        st.experimental_rerun()
 
 with col_btn3:
     if st.button("📤 导出我的答案", use_container_width=True):
@@ -318,7 +324,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         "ta_name": ta_name,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
     }
-    # 不调用 st.rerun()，自动重运行
+    st.experimental_rerun()
 
 # ---------- 显示报告 ----------
 if st.session_state.report_data is not None:
@@ -457,8 +463,6 @@ if st.session_state.report_data is not None:
         var history = JSON.parse(localStorage.getItem('love_test_history')) || [];
         history.push(record);
         localStorage.setItem('love_test_history', JSON.stringify(history));
-        // 触发历史记录区域的刷新（通过重新加载页面，但为避免刷新，我们可以标记更新）
-        // 这里我们不刷新，用户展开时自动读取最新数据。
     }})();
     </script>
     """, height=0)
@@ -467,7 +471,7 @@ if st.session_state.report_data is not None:
 st.markdown("---")
 with st.expander("📚 查看历史记录", expanded=False):
     st.components.v1.html("""
-    <div id="history-container" style="max-height:600px; overflow:auto;">
+    <div id="history-container" style="max-height:800px; overflow:auto;">
         <p>加载历史记录中...</p>
     </div>
     <script>
@@ -544,4 +548,4 @@ with st.expander("📚 查看历史记录", expanded=False):
         renderHistory();
     })();
     </script>
-    """, height=600)  # 增加高度，显示更多记录
+    """, height=800)
