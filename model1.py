@@ -269,14 +269,14 @@ with col_btn1:
         st.session_state.me_scores = [3] * 30
         st.session_state.ta_scores = [3] * 30
         st.toast("✅ 已重置所有答案", icon="🔄")
-        st.experimental_rerun()  # 强制刷新页面，滑块立即更新
+        st.rerun()  # 强制刷新页面
 
 with col_btn2:
     if st.button("🎲 随机填答", use_container_width=True):
         st.session_state.me_scores = [random.randint(1, 5) for _ in range(30)]
         st.session_state.ta_scores = [random.randint(1, 5) for _ in range(30)]
         st.toast("🎲 已随机填充答案", icon="✨")
-        st.experimental_rerun()
+        st.rerun()
 
 with col_btn3:
     if st.button("📤 导出我的答案", use_container_width=True):
@@ -324,7 +324,7 @@ if st.button("✨ 生成报告", type="primary", use_container_width=True):
         "ta_name": ta_name,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
     }
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------- 显示报告 ----------
 if st.session_state.report_data is not None:
