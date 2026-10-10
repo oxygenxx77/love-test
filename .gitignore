@@ -1,0 +1,12 @@
+# 白名单：默认什么都不提交，只放行网页本身和文档
+/*
+!.gitignore
+!README.md
+!index.html
+!css/
+!js/
+!docs/
+
+.DS_Store
+*.log
+*.bak
